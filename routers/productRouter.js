@@ -34,7 +34,7 @@ router.put(
   productController.updateProduct
 );
 router.put(
-  "/:id",
+  "/:id/status",
   verifyToken,
   verifyRole(["admin", "customer"]),
   productController.updateProductStatus

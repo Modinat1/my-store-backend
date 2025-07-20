@@ -1,5 +1,6 @@
 const Product = require("../schema/product.model.js");
 const joi = require("joi");
+const { uploadFile } = require("../utils/fileUpload.js");
 
 const getAllProduct = async (req, res) => {
   try {
@@ -16,9 +17,14 @@ const addNewProduct = async (req, res) => {
   try {
     const { productName, cost, description, stockStatus } = req.body;
 
-    const productImages = req.files?.map((file) => {
-      return `/uploads/${file.filename}`;
-    });
+    // const productImages = req.files?.map((file) => {
+    //   return `/uploads/${file.filename}`;
+    // });
+    // console.log("Files received:", req.files);
+
+    const productImages = await Promise.all(
+      (req.files || []).map((file) => uploadFile(file))
+    );
 
     const product = await Product.create({
       productName,

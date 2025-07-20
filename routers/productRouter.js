@@ -6,6 +6,7 @@ const productController = require("../controllers/productController");
 const verifyToken = require("../middleware/verifyToken");
 const verifyRole = require("../middleware/verifyRole");
 const uploadImages = require("../middleware/uploadImages");
+// const uploads = require("../utils/multerConfig.js");
 
 // Product Router
 router.get(
@@ -18,6 +19,7 @@ router.post(
   "/",
   verifyToken,
   verifyRole(["admin"]),
+  // uploads.array("productImages", 5),
   uploadImages.array("productImages", 5),
   productController.addNewProduct
 );

@@ -1,6 +1,6 @@
-const { readFile } = require("node:fs/promises");
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 require("dotenv").config();
+const { v4 } = require("uuid");
 
 const S3 = new S3Client({
   region: "auto",
@@ -14,17 +14,18 @@ const S3 = new S3Client({
 });
 
 const uploadFile = async (file) => {
+  const fileName = v4() + "." + file.mimetype.split("/")[1];
   try {
     const command = new PutObjectCommand({
-      Bucket: "product-bucket2",
-      Key: file.filename,
-      Body: await readFile(file.path),
+      Bucket: "product-bucket",
+      Key: fileName,
+      Body: file.buffer,
     });
 
     const response = await S3.send(command);
 
     if (response.$metadata.httpStatusCode === 200) {
-      return `https://product-bucket.t3.storage.dev/${file.filename}`;
+      return `https://product-bucket.t3.storage.dev/${fileName}`;
     } else {
       throw new Error("Failed to upload file");
     }

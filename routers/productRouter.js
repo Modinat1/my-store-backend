@@ -33,6 +33,7 @@ router.put(
   "/:id",
   verifyToken,
   verifyRole(["admin", "customer"]),
+  uploadImages.array("productImages", 5),
   productController.updateProduct
 );
 router.put(

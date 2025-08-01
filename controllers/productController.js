@@ -4,7 +4,32 @@ const { uploadFile } = require("../utils/fileUpload.js");
 
 const getAllProduct = async (req, res) => {
   try {
-    const products = await Product.find({ ownerId: req.decoded.ownerId });
+    const { brand, page, limit } = req.params;
+
+    const products = await Product.paginate(
+      {},
+      {
+        page: (page && isNaN(page)) == false ? parseInt(page) : 1,
+        limit: (limit && isNaN(limit)) == false ? parseInt(limit) : 4,
+        brand: brand,
+        populate: [
+          {
+            path: "ownerId",
+            select: "fullName role",
+          },
+          {
+            path: "brand",
+            select: "brandName",
+          },
+        ],
+      }
+    );
+    // const products = await Product.find(
+    //   {
+    //     ownerId: req.decoded.ownerId,
+    //   },
+    //   "-createdAt -updatedAt"
+    // ).populate("ownerId", "fullName email role");
     res.status(200).json(products);
   } catch (error) {
     res
@@ -15,7 +40,7 @@ const getAllProduct = async (req, res) => {
 
 const addNewProduct = async (req, res) => {
   try {
-    const { productName, cost, description, stockStatus } = req.body;
+    const { productName, cost, description, stockStatus, brand } = req.body;
 
     // const productImages = req.files?.map((file) => {
     //   return `/uploads/${file.filename}`;
@@ -32,6 +57,7 @@ const addNewProduct = async (req, res) => {
       stockStatus,
       description,
       productImages,
+      brand,
       ownerId: req.decoded.ownerId,
     });
 

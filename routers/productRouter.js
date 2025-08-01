@@ -10,7 +10,7 @@ const uploadImages = require("../middleware/uploadImages");
 
 // Product Router
 router.get(
-  "/",
+  "/:brand/:page/:limit",
   verifyToken,
   verifyRole(["admin", "customer"]),
   productController.getAllProduct

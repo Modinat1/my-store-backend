@@ -34,7 +34,7 @@ const addNewBrand = async (req, res) => {
 const getBrandById = async (req, res) => {
   try {
     const id = req.params.id;
-    const brand = await brand.findById(id);
+    const brand = await Brands.findById(id);
     if (!brand) {
       return res.status(404).send({ message: "brand not found" });
     }

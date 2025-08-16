@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const productRouter = require("./routers/productRouter.js");
 const authRouter = require("./routers/authRouter.js");
 const brandRouter = require("./routers/brandRouter.js");
+const orderRouter = require("./routers/orderRouter.js");
 require("dotenv").config();
 
 const connectToDatabase = async () => {
@@ -23,6 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/products", productRouter);
 app.use("/auth", authRouter);
 app.use("/brand", brandRouter);
+app.use("/order", orderRouter);
 
 app.listen(8080, () => {
   console.log("Server has started on port 8080");

@@ -2,7 +2,23 @@ const Orders = require("../schema/order.model.js");
 
 const getAllOrder = async (req, res) => {
   try {
-    const orders = await Orders.find();
+    const { brand, page, limit } = req.query;
+
+    const orders = await Orders.paginate(
+      {},
+      {
+        page: (page && isNaN(page)) == false ? parseInt(page) : 1,
+        limit: (limit && isNaN(limit)) == false ? parseInt(limit) : 4,
+        brand: brand,
+        populate: [
+          {
+            path: "ownerId",
+            select: "fullName role",
+          },
+        ],
+      }
+    );
+
     res.status(200).json(orders);
   } catch (error) {
     res
@@ -28,7 +44,10 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const order = await Orders.create({ orders: [newOrder] });
+    const order = await Orders.create({
+      ownerId: req.decoded.ownerId,
+      orders: [newOrder],
+    });
 
     res.status(201).json({
       message: "Order created successfully",

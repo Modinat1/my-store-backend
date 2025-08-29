@@ -7,6 +7,7 @@ const authRouter = require("./routers/authRouter.js");
 const brandRouter = require("./routers/brandRouter.js");
 const orderRouter = require("./routers/orderRouter.js");
 const userRouter = require("./routers/userRouter.js");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const connectToDatabase = async () => {
@@ -35,7 +36,6 @@ app.use((req, res, next) => {
 ioServer.use((socket, next) => {
   const auth = socket.handshake.headers.authorization;
   const [type, token] = auth.split(" ");
-  // console.log("type", type, "token", token);
   if (type === "Bearer") {
     const value = jwt.verify(token, process.env.JWT_SECRET);
     socket.handshake.auth.decoded = value;

@@ -111,6 +111,7 @@ const updateOrderById = async (req, res) => {
   }
 };
 
+// old updateShippingStatus before socket
 // const updateShippingStatus = async (req, res) => {
 //   try {
 //     const { shippingStatus, productId } = req.body;
@@ -134,14 +135,13 @@ const updateOrderById = async (req, res) => {
 //   }
 // };
 
-// Assuming you have io instance attached globally (e.g., app.set("io", io))
 const updateShippingStatus = async (req, res) => {
   try {
     const { shippingStatus, productId } = req.body;
 
     const order = await Orders.findOneAndUpdate(
-      { _id: req.params.id, "orders.productId": productId }, // find order + product
-      { $set: { "orders.$.shippingStatus": shippingStatus } }, // update just that product
+      { _id: req.params.id, "orders.productId": productId },
+      { $set: { "orders.$.shippingStatus": shippingStatus } },
       { new: true }
     );
 
@@ -149,24 +149,20 @@ const updateShippingStatus = async (req, res) => {
       return res.status(404).json({ message: "Order or product not found" });
     }
 
-    // ✅ Emit socket event to the order owner
-    const ioServer = req.app.get("ioServer"); // get io instance
+    const ioServer = req.app.get("ioServer");
     const updatedProduct = order.orders.find(
       (o) => o.productId.toString() === productId
     );
 
     if (updatedProduct) {
-      // console.log(
-      //   `Emitting shippingStatusUpdated to user ${updatedProduct.ownerId} for order ${order._id}`
-      // );
       console.log(
         `Emitting shippingStatusUpdated to user ${order.ownerId} for order ${order._id}`
       );
-      ioServer.to(order.ownerId.toString()).emit("shippingStatusUpdated", {
+      ioServer.to(order.ownerId.toString()).emit("send-message", {
         orderId: order._id,
         productId: updatedProduct.productId,
-        newStatus: updatedProduct.shippingStatus,
-        message: `Your order for ${updatedProduct.productName} is now ${updatedProduct.shippingStatus}`,
+        title: "New shipping status",
+        message: `Your last order shipping status has been updated to ${updatedProduct.shippingStatus}`,
       });
     }
 

@@ -111,6 +111,30 @@ const updateOrderById = async (req, res) => {
   }
 };
 
+// const updateShippingStatus = async (req, res) => {
+//   try {
+//     const { shippingStatus, productId } = req.body;
+
+//     const order = await Orders.findOneAndUpdate(
+//       { _id: req.params.id, "orders.productId": productId }, // find order + product
+//       { $set: { "orders.$.shippingStatus": shippingStatus } }, // update just that product
+//       { new: true }
+//     );
+
+//     if (!order) {
+//       return res.status(404).json({ message: "Order or product not found" });
+//     }
+
+//     res.status(200).json({ message: "Shipping status updated", order });
+//   } catch (error) {
+//     res.status(500).json({
+//       message: "Error updating order",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// Assuming you have io instance attached globally (e.g., app.set("io", io))
 const updateShippingStatus = async (req, res) => {
   try {
     const { shippingStatus, productId } = req.body;
@@ -125,12 +149,34 @@ const updateShippingStatus = async (req, res) => {
       return res.status(404).json({ message: "Order or product not found" });
     }
 
+    // ✅ Emit socket event to the order owner
+    const ioServer = req.app.get("ioServer"); // get io instance
+    const updatedProduct = order.orders.find(
+      (o) => o.productId.toString() === productId
+    );
+
+    if (updatedProduct) {
+      // console.log(
+      //   `Emitting shippingStatusUpdated to user ${updatedProduct.ownerId} for order ${order._id}`
+      // );
+      console.log(
+        `Emitting shippingStatusUpdated to user ${order.ownerId} for order ${order._id}`
+      );
+      ioServer.to(order.ownerId.toString()).emit("shippingStatusUpdated", {
+        orderId: order._id,
+        productId: updatedProduct.productId,
+        newStatus: updatedProduct.shippingStatus,
+        message: `Your order for ${updatedProduct.productName} is now ${updatedProduct.shippingStatus}`,
+      });
+    }
+
     res.status(200).json({ message: "Shipping status updated", order });
   } catch (error) {
     res.status(500).json({
       message: "Error updating order",
       error: error.message,
     });
+    console.log("error from updating shipping status", error);
   }
 };
 
@@ -155,6 +201,45 @@ const deleteOrderById = async (req, res) => {
   }
 };
 
+const orderHistory = async (req, res) => {
+  try {
+    const { role, ownerId } = req.decoded;
+    const { page, limit } = req.query;
+
+    let query = {};
+
+    if (role === "customer") {
+      query.ownerId = ownerId;
+    }
+
+    const orders = await Orders.paginate(query, {
+      page: (page && isNaN(page)) == false ? parseInt(page) : 1,
+      limit: (limit && isNaN(limit)) == false ? parseInt(limit) : 4,
+      // brand: brand,
+      populate: [
+        {
+          path: "ownerId",
+          select: "fullName email role",
+        },
+        {
+          path: "orders.productId",
+          select: "name price brand",
+        },
+      ],
+    });
+
+    res.status(200).json({
+      message: "Order history fetched successfully",
+      orders,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching order history",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllOrder,
   createOrder,
@@ -162,4 +247,5 @@ module.exports = {
   updateOrderById,
   deleteOrderById,
   updateShippingStatus,
+  orderHistory,
 };

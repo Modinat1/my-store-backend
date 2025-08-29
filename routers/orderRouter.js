@@ -13,6 +13,7 @@ router.post(
   verifyRole(["customer"]),
   orderController.createOrder
 );
+router.get("/history", verifyToken, orderController.orderHistory);
 router.get("/:id", verifyToken, orderController.getOrderById);
 router.patch("/:id", verifyToken, orderController.updateOrderById);
 router.patch(
